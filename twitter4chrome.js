@@ -82,10 +82,6 @@ var Twitter = (function() {
     );
   };
 
-  Twitter.verify = function(verifier, cb) {
-    chrome.runtime.sendMessage({ "verifier": verifier }, cb);
-  };
-
   return Twitter;
 
 })();
