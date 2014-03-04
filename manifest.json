@@ -1,0 +1,38 @@
+{
+  "name": "twitter4chrome.js",
+  "version": "0.1",
+  "manifest_version": 2,
+  "background": {
+    "scripts": [
+      "oauthclient4chrome.js/extlib/jquery.js",
+      "oauthclient4chrome.js/extlib/underscore.js",
+      "oauthclient4chrome.js/extlib/sha1.js",
+      "oauthclient4chrome.js/extlib/oauth.js",
+      "oauthclient4chrome.js/lib/oauthclient.js",
+      "const.js",
+      "twitter4chrome.js",
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://api.twitter.com/oauth/authorize"],
+      "js": [
+        "oauthclient4chrome.js/extlib/jquery.js",
+        "oauthclient4chrome.js/extlib/underscore.js",
+        "oauthclient4chrome.js/extlib/sha1.js",
+        "oauthclient4chrome.js/extlib/oauth.js",
+        "oauthclient4chrome.js/lib/oauthclient.js",
+        "const.js",
+        "twitter4chrome.js",
+        "content_script.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_action": {
+    "default_icon": "icon.png"
+  },
+  "permissions": ["https://api.twitter.com/*"]
+}

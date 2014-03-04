@@ -1,0 +1,3 @@
+[submodule "oauthclient4chrome.js"]
+	path = oauthclient4chrome.js
+	url = https://github.com/kinjouj/oauthclient4chrome.js
