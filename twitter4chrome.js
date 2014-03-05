@@ -78,6 +78,7 @@ var Twitter = (function() {
     oauth.getResponse(
       "GET",
       "https://api.twitter.com/1.1/statuses/home_timeline.json",
+      { slug: "その他", "owner_screen_name": "kinjou_j" },
       cb
     );
   };

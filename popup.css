@@ -3,10 +3,14 @@ html {
   height: 500px;
 }
 
+a:visited {
+  color: blue;
+}
+
 .card {
   background: #fff;
   border: 1px solid rgb(225, 232, 237);
-  border-radius: 3px;
+  border-radius: 8px;
   padding: 0px;
   margin: 15px;
   overflow: hidden;
@@ -27,11 +31,60 @@ html {
   max-width: 48px;
   max-height: 48px;
   border: 3px solid #fff;
-  border-radius: 3px;
+  border-radius: 5px;
 }
 
 .card-body {
-  margin: 10px;
+  margin: 20px 10px;
   font-size: 14px;
   font-family: 'Open Sans', sans-serif;
+}
+
+.card-body .inline-image {
+  margin: 10px 0px;
+  width: 100%;
+  height: 100%;
+}
+
+.card-footer {
+  border-top: 1px solid rgb(225, 232, 237);
+}
+
+.card-footer-left {
+  float: left;
+}
+
+.card-footer-right {
+  float: right;
+}
+
+.card-footer ul {
+  float: right;
+  margin: 5px;
+}
+
+.card-footer li {
+  list-style: none;
+  display: inline;
+  margin: 5px;
+  font-size: 10px;
+}
+
+.card-clear {
+  clear: both;
+}
+
+.footer-icon:before {
+  font-family: "rosettaicons";
+  -webkit-filter: invert();
+}
+
+.icon-star:before {
+  content: "\f147";
+  color: gray;
+}
+
+.icon-retweet:before {
+  content: "\f152";
+  color: gray;
 }
