@@ -2,14 +2,16 @@
   "use strict";
 
   chrome.runtime.getBackgroundPage(function(page) {
+    var nbar = new Nanobar();
+
     var twitter = page.twitter;
-    twitter.home_timeline(function(tweets) {
+    twitter.home_timeline({ "count": 50 }, function(tweets) {
       var container = document.querySelector('#container');
       var fragment = document.createDocumentFragment();
 
       /*
       <div class="card">
-        <div class="card-image" data-background="{background_image_url}">
+        <div class="card-header" data-background="{background_image_url}">
         </div>
         <div class="card-body">
           <p>{text}</p>
@@ -23,6 +25,9 @@
         </div>
       </div>
       */
+
+      var nbarPercentage = 100 / tweets.length;
+      var nbarCount = 0;
 
       tweets.forEach(function(tweet) {
         if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
@@ -39,10 +44,13 @@
           window.open('https://twitter.com/' + user.screen_name);
         });
 
-        var imgDiv = document.createElement('div');
-        imgDiv.setAttribute('class', 'card-image');
-        imgDiv.setAttribute('data-background', profileBackgroundImageUrl);
-        imgDiv.appendChild(img);
+        var headerDiv = document.createElement('div');
+        headerDiv.setAttribute('class', 'card-header');
+        headerDiv.setAttribute(
+          'data-background',
+          profileBackgroundImageUrl
+        );
+        headerDiv.appendChild(img);
 
         var text = tweet.text;
         var createdAt = new Date(tweet.created_at);
@@ -105,8 +113,16 @@
           });
         }
 
+        var footerListUserAnchor = document.createElement('a');
+        footerListUserAnchor.innerText = user.name;
+        footerListUserAnchor.setAttribute('target', '_blank');
+        footerListUserAnchor.setAttribute(
+          'href',
+          'https://twitter.com/' + user.screen_name
+        );
+
         var footerListUser = document.createElement('li');
-        footerListUser.innerHTML = user.screen_name;
+        footerListUser.appendChild(footerListUserAnchor);
 
         var footerListRTSpan = document.createElement('span');
         footerListRTSpan.setAttribute('class', 'footer-icon icon-retweet');
@@ -122,8 +138,8 @@
         var footerListFav = document.createElement('li');
         footerListFav.appendChild(footerListFavSpan);
 
-        var footerListCreatedAt = document.createElement('li');
-        footerListCreatedAt.innerText = sprintf(
+        var footerListCreatedAtAnchor = document.createElement('a');
+        footerListCreatedAtAnchor.innerText = sprintf(
           "%04d/%02d/%02d %02d:%02d:%02d",
           createdAt.getFullYear(),
           createdAt.getMonth() + 1,
@@ -132,6 +148,14 @@
           createdAt.getMinutes(),
           createdAt.getSeconds()
         );
+        footerListCreatedAtAnchor.setAttribute('target', '_blank');
+        footerListCreatedAtAnchor.setAttribute(
+          'href',
+          'https://twitter.com/' + user.screen_name + '/status/' + tweet.id_str
+        );
+
+        var footerListCreatedAt = document.createElement('li');
+        footerListCreatedAt.appendChild(footerListCreatedAtAnchor);
 
         var source = $.parseHTML(tweet.source)[0];
         if (!(source instanceof HTMLElement)) {
@@ -173,16 +197,19 @@
 
         var div = document.createElement('div');
         div.setAttribute('class', 'card');
-        div.appendChild(imgDiv);
+        div.appendChild(headerDiv);
         div.appendChild(bodyDiv);
         div.appendChild(footerDiv);
 
         fragment.appendChild(div);
+
+        nbarCount += nbarPercentage;
+        nbar.go(nbarCount);
       });
 
       container.appendChild(fragment);
 
-      $('.card-image').dataBackground();
+      $('.card-header').dataBackground();
     });
   });
 })();

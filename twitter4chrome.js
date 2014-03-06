@@ -13,10 +13,10 @@ var Twitter = (function() {
     return token;
   };
 
-  var oauth;
+  var oauth = new OAuthClient();
 
   var Twitter = function() {
-    oauth = new OAuthClient();
+    //oauth = new OAuthClient();
   };
 
   Twitter.prototype.authorize = function(cb) {
@@ -74,14 +74,21 @@ var Twitter = (function() {
     }
   };
 
-  Twitter.prototype.home_timeline = function(cb) {
+  Twitter.prototype.home_timeline = function(options, cb) {
+    if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
+      cb = options;
+      options = null;
+    }
+
     oauth.getResponse(
       "GET",
       "https://api.twitter.com/1.1/statuses/home_timeline.json",
-      { slug: "その他", "owner_screen_name": "kinjou_j" },
+      options,
       cb
     );
   };
+
+  Object.freeze(Twitter);
 
   return Twitter;
 
