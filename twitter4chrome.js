@@ -15,9 +15,7 @@ var Twitter = (function() {
 
   var oauth = new OAuthClient();
 
-  var Twitter = function() {
-    //oauth = new OAuthClient();
-  };
+  var Twitter = function() {};
 
   Twitter.prototype.authorize = function(cb) {
     if (oauth.isAuthenticated()) {
@@ -30,7 +28,6 @@ var Twitter = (function() {
           var tokens = parseToken(tokenString);
           var token = tokens.oauth_token;
           var tokenSecret = tokens.oauth_token_secret;
-
           var authorizeUrl = oauth.buildRequestURL(
             "GET",
             "https://api.twitter.com/oauth/authorize",
@@ -55,9 +52,8 @@ var Twitter = (function() {
               function(tokenString) {
                 var tokens = parseToken(tokenString);
 
-                for (var key in tokens) {
+                for (var key in tokens)
                   localStorage.setItem(key, tokens[key]);
-                }
 
                 res(true);
                 cb();
@@ -88,7 +84,22 @@ var Twitter = (function() {
     );
   };
 
-  Object.freeze(Twitter);
+  Twitter.prototype.create_favorites = function(id, cb) {
+    oauth.getResponse(
+      "POST",
+      "https://api.twitter.com/1.1/favorites/create.json",
+      { "id": id },
+      cb
+    );
+  };
+
+  Twitter.prototype.retweet = function(id, cb) {
+    oauth.getResponse(
+      "POST",
+      "https://api.twitter.com/1.1/statuses/retweet/" + id + ".json",
+      cb
+    );
+  };
 
   return Twitter;
 

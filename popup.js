@@ -2,10 +2,8 @@
   "use strict";
 
   chrome.runtime.getBackgroundPage(function(page) {
-    var nbar = new Nanobar();
-
     var twitter = page.twitter;
-    twitter.home_timeline({ "count": 50 }, function(tweets) {
+    twitter.home_timeline(function(tweets) {
       var container = document.querySelector('#container');
       var fragment = document.createDocumentFragment();
 
@@ -14,7 +12,7 @@
         <div class="card-header" data-background="{background_image_url}">
         </div>
         <div class="card-body">
-          <p>{text}</p>
+          <p></p>
         </div>
         <div class="card-footer">
           <div class="card-footer-left">
@@ -25,9 +23,6 @@
         </div>
       </div>
       */
-
-      var nbarPercentage = 100 / tweets.length;
-      var nbarCount = 0;
 
       tweets.forEach(function(tweet) {
         if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
@@ -128,12 +123,34 @@
         footerListRTSpan.setAttribute('class', 'footer-icon icon-retweet');
         footerListRTSpan.innerHTML = '&nbsp;' + tweet.retweet_count;
 
+        if (!tweet.retweeted) {
+          footerListRTSpan.addEventListener('click', function() {
+            if (confirm('retweet?')) {
+              twitter.retweet(tweet.id_str, function() {
+                tweet.retweet_count++;
+                footerListRTSpan.innerHTML = '&nbsp;' + tweet.retweet_count;
+              });
+            }
+          });
+        }
+
         var footerListRT = document.createElement('li');
         footerListRT.appendChild(footerListRTSpan);
 
         var footerListFavSpan = document.createElement('span');
         footerListFavSpan.setAttribute('class', 'footer-icon icon-star');
         footerListFavSpan.innerHTML = '&nbsp;' + tweet.favorite_count;
+
+        if (!tweet.favorited) {
+          footerListFavSpan.addEventListener('click', function() {
+            if (confirm('favorite?')) {
+              twitter.create_favorites(tweet.id_str, function() {
+                tweet.favorite_count++;
+                footerListFavSpan.innerHTML = '&nbsp;' + tweet.favorite_count;
+              });
+            }
+          });
+        }
 
         var footerListFav = document.createElement('li');
         footerListFav.appendChild(footerListFavSpan);
@@ -202,13 +219,9 @@
         div.appendChild(footerDiv);
 
         fragment.appendChild(div);
-
-        nbarCount += nbarPercentage;
-        nbar.go(nbarCount);
       });
 
       container.appendChild(fragment);
-
       $('.card-header').dataBackground();
     });
   });
