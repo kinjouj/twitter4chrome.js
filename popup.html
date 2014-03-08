@@ -3,12 +3,36 @@
   <head>
     <link rel="stylesheet" href="https://abs.twimg.com/a/1393013467/css/t1/rosetta_core.bundle.css" />
     <link rel="stylesheet" href="popup.css" />
-    <script type="text/javascript" src="oauthclient4chrome.js/extlib/jquery.js"></script>
-    <script type="text/javascript" src="assets/jquery.data.background.js"></script>
-    <script type="text/javascript" src="assets/sprintf.js"></script>
+    <script type="text/javascript">window.name = 'NG_DEFER_BOOTSTRAP!_x';</script>
+    <script src="assets/angular.min.js"></script>
+    <script type="text/javascript" src="controller.js"></script>
   </head>
   <body>
-    <div id="container"></div>
-    <script type="text/javascript" src="popup.js"></script>
+    <div id="container" ng-controller="TwitterController">
+      <div ng-repeat="tweet in tweets" class="card" ng-cloak>
+        <div class="card-header" style="background: url('{{tweet.user.profile_background_image_url_https}}')">
+          <img src="{{tweet.user.profile_image_url_https}}" />
+        </div>
+        <div class="card-body">
+          <p>{{tweet.text}}</p>
+        </div>
+        <div class="card-footer">
+          <div class="card-footer-left">
+            <ul>
+              <li><a href="https://twitter.com/{{tweet.user.screen_name">{{tweet.user.name}}</a></li>
+            </ul>
+          </div>
+          <div class="card-footer-right">
+            <ul>
+              <li><span class="footer-icon icon-retweet">&nbsp;{{tweet.retweet_count}}</span></li>
+              <li><span class="footer-icon icon-star">&nbsp;{{tweet.favorite_count}}</span></li>
+              <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}">{{tweet.created_at}}</a></li>
+            </ul>
+          </div>
+          <div style="clear:both" />
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript" src="popup_angular.js"></script>
   </body>
 </html>
