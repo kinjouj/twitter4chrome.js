@@ -35,7 +35,7 @@
 
         var img = document.createElement('img');
         img.setAttribute('src', profileImageUrl);
-        img.addEventListener("click", function() {
+        img.addEventListener('click', function() {
           window.open('https://twitter.com/' + user.screen_name);
         });
 
@@ -45,13 +45,14 @@
           'data-background',
           profileBackgroundImageUrl
         );
+        $(headerDiv).dataBackground();
         headerDiv.appendChild(img);
 
         var text = tweet.text;
         var createdAt = new Date(tweet.created_at);
         var entities = tweet.entities;
 
-        if ("hashtags" in entities) {
+        if ('hashtags' in entities) {
           entities.hashtags.forEach(function(hashtag) {
             text = text.replace(
               '#' + hashtag.text,
@@ -62,7 +63,7 @@
 
         var medias = [];
 
-        if ("media" in entities) {
+        if ('media' in entities) {
           entities.media.forEach(function(media) {
             text = text.replace(
               media.url,
@@ -73,7 +74,7 @@
           });
         }
 
-        if ("urls" in entities) {
+        if ('urls' in entities) {
           entities.urls.forEach(function(url) {
             text = text.replace(
               url.url,
@@ -82,7 +83,7 @@
           });
         }
 
-        if ("user_mentions" in entities) {
+        if ('user_mentions' in entities) {
           entities.user_mentions.forEach(function(mention) {
             text = text.replace(
               '@' + mention.screen_name,
@@ -157,7 +158,7 @@
 
         var footerListCreatedAtAnchor = document.createElement('a');
         footerListCreatedAtAnchor.innerText = sprintf(
-          "%04d/%02d/%02d %02d:%02d:%02d",
+          '%04d/%02d/%02d %02d:%02d:%02d',
           createdAt.getFullYear(),
           createdAt.getMonth() + 1,
           createdAt.getDate(),
@@ -222,7 +223,6 @@
       });
 
       container.appendChild(fragment);
-      $('.card-header').dataBackground();
     });
   });
 })();
