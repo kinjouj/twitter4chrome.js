@@ -2,7 +2,7 @@
 <html ng-app="twitterApp">
   <head>
     <link rel="stylesheet" href="https://abs.twimg.com/a/1393013467/css/t1/rosetta_core.bundle.css" />
-    <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="assets/popup.css" />
     <script type="text/javascript" src="assets/sprintf.js"></script>
     <script type="text/javascript" src="assets/angular.min.js"></script>
     <script type="text/javascript" src="controller.js"></script>
@@ -13,8 +13,7 @@
         <div class="card-header" ng-background="{{tweet.user.profile_background_image_url_https}}">
           <img ng-src="{{tweet.user.profile_image_url_https}}" />
         </div>
-        <div class="card-body">
-          <p>{{tweet.text}}</p>
+        <div class="card-body" ng-tweet-text>
         </div>
         <div class="card-footer">
           <div class="card-footer-left">
