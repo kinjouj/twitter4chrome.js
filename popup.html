@@ -5,27 +5,26 @@
     <link rel="stylesheet" href="assets/popup.css" />
     <script type="text/javascript" src="assets/sprintf.js"></script>
     <script type="text/javascript" src="assets/angular.min.js"></script>
-    <script type="text/javascript" src="controller.js"></script>
+    <script type="text/javascript" src="assets/angular-sanitize.min.js"></script>
   </head>
   <body>
-    <div id="container" ng-controller="TwitterController">
-      <div ng-repeat="tweet in tweets" class="card" ng-cloak>
+    <div id="container" ng-controller="twitter">
+      <div class="card" ng-repeat="tweet in tweets" ng-cloak ng-tweet>
         <div class="card-header" ng-background="{{tweet.user.profile_background_image_url_https}}">
-          <img ng-src="{{tweet.user.profile_image_url_https}}" />
+          <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
         </div>
-        <div class="card-body" ng-tweet-text>
-        </div>
+        <div class="card-body" ng-bind-html="tweet.text" ng-tweet-inline-image></div>
         <div class="card-footer">
           <div class="card-footer-left">
             <ul>
-              <li><a href="https://twitter.com/{{tweet.user.screen_name}}">{{tweet.user.name}}</a></li>
+              <li><a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">{{tweet.user.name}}</a></li>
             </ul>
           </div>
           <div class="card-footer-right">
             <ul>
-              <li><span class="footer-icon icon-retweet">&nbsp;{{tweet.retweet_count}}</span></li>
-              <li><span class="footer-icon icon-star">&nbsp;{{tweet.favorite_count}}</span></li>
-              <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" ng-date="{{tweet.created_at}}"></a></li>
+              <li><span class="footer-icon icon-retweet" ng-click="send_retweet(tweet.id_str)">&nbsp;{{tweet.retweet_count}}</span></li>
+              <li><span class="footer-icon icon-star" ng-click="send_favorite(tweet.id_str)">&nbsp;{{tweet.favorite_count}}</span></li>
+              <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" target="_blank" ng-tweet-date></a></li>
             </ul>
           </div>
           <div style="clear:both" />

@@ -1,5 +1,4 @@
-
-angular.module('twitterApp', [])
+angular.module('twitterApp', ['ngSanitize'])
   .directive('ngBackground', function() {
     return function(scope, element, attrs) {
       attrs.$observe('ngBackground', function(value) {
@@ -8,51 +7,91 @@ angular.module('twitterApp', [])
       });
     };
   })
-  .directive('ngTweetText', function() {
+  .directive('ngTweet', function($interpolate) {
     return function(scope, element, attrs) {
       var tweet = scope.tweet;
+
+      if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
+
       var entities = tweet.entities;
       var text = tweet.text;
-      var inlineMedia = [];
 
       if ('hashtags' in entities) {
         entities.hashtags.forEach(function(hashtag) {
-          var tag = hashtag.text;
-          text = text.replace(
-            '#' + tag,
-            '<a href="https://twitter.com/search/#' + encodeURIComponent(tag) + '" target="_blank">#' + tag + '</a>'
+          var exp = $interpolate(
+            '<a href="https://twitter.com/search?q=%23{{tag}}" target="_blank">#{{tag}}</a>'
           );
+          var expParam = { "tag": encodeURIComponent(hashtag.text) };
+
+          text = text.replace('#' + hashtag.text, exp(expParam));
         });
       }
+
+      tweet.inlineMedia = [];
 
       if ('media' in entities) {
         entities.media.forEach(function(media) {
-          text = text.replace(
-            media.url,
-            '<a href="' + media.media_url_https + '" target="_blank">' + media.url + '</a>'
+          var exp = $interpolate(
+            '<a href="{{url}}" target="_blank">{{text}}</a>'
           );
+          var expParam = { "url": media.media_url_https, "text": media.url };
 
-          inlineMedia.push(media.media_url_https);
+          text = text.replace(media.url, exp(expParam));
+          tweet.inlineMedia.push(media.media_url_https);
         });
       }
 
-      var p = document.createElement('p');
-      p.innerHTML = text;
-      element.append(p);
+      if ('urls' in entities) {
+        entities.urls.forEach(function(url) {
+          var exp = $interpolate(
+            '<a href="{{url}}" target="_blank">{{text}}</a>'
+          );
+          var expParam = { "url": url.url, "text": url.expanded_url };
+          text = text.replace(url.url, exp(expParam));
+        });
+      }
 
-      inlineMedia.forEach(function(media) {
-        var mediaImg = document.createElement('img');
-        mediaImg.src = media;
-        mediaImg.setAttribute('class', 'inline-image');
+      if ('user_mentions' in entities) {
+        entities.user_mentions.forEach(function(mention) {
+          var exp = $interpolate(
+            '<a href="https://twitter.com/{{screen_name}}" target="_blank">@{{screen_name}}</a>'
+          );
+          var expParam = { "screen_name": mention.screen_name };
+          text = text.replace('@' + mention.screen_name, exp(expParam));
+        });
+      }
 
-        element.append(mediaImg);
-      });
+      tweet.text = text;
+      tweet.created_at = new Date(tweet.created_at);
+      scope.tweet = tweet;
     };
   })
-  .directive('ngDate', function() {
+  .directive('ngTweetInlineImage', function($timeout) {
     return function(scope, element, attrs) {
-      attrs.$observe('ngDate', function(value) {
-        var date = new Date(value);
+      $timeout(function() {
+        var tweet = scope.tweet;
+
+        if (!('inlineMedia' in tweet))
+          return;
+
+        tweet.inlineMedia.forEach(function(media) {
+          var elm = angular.element('<img>');
+          elm.attr('src', media);
+          elm.addClass('inline-image');
+
+          element.append(elm);
+        });
+
+        element.removeAttr('ng-tweet-inline-image');
+      }, 0);
+    };
+  })
+  .directive('ngTweetDate', function($timeout) {
+    return function(scope, element, attrs) {
+      $timeout(function() {
+        var tweet = scope.tweet;
+        var date = tweet.created_at;
+
         element.text(
           sprintf(
             '%04d/%02d/%02d %02d:%02d:%02d',
@@ -64,8 +103,29 @@ angular.module('twitterApp', [])
             date.getSeconds()
           )
         );
-        element.removeAttr('ng-date');
-      });
+        element.removeAttr('ng-tweet-date');
+      }, 0);
     }
   })
-  .controller('twitter', TwitterController)
+  .controller('twitter', function($scope, $timeout) {
+    chrome.runtime.getBackgroundPage(function(bg) {
+      var twitter = bg.twitter;
+      twitter.home_timeline(function(tweets) {
+        $timeout(function() { $scope.tweets = tweets; }, 0);
+      });
+
+      $scope.send_retweet = function(id) {
+        if (confirm('retweet?')) {
+          twitter.retweet(id, function() {
+          });
+        }
+      };
+
+      $scope.send_favorite = function(id) {
+        if (confirm('favorite?')) {
+          twitter.create_favorites(id, function() {
+          });
+        }
+      };
+    });
+  });
