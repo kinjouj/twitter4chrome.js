@@ -2,32 +2,52 @@
 <html ng-app="twitterApp">
   <head>
     <link rel="stylesheet" href="https://abs.twimg.com/a/1393013467/css/t1/rosetta_core.bundle.css" />
-    <link rel="stylesheet" href="assets/popup.css" />
-    <script type="text/javascript" src="assets/sprintf.js"></script>
-    <script type="text/javascript" src="assets/angular.min.js"></script>
-    <script type="text/javascript" src="assets/angular-sanitize.min.js"></script>
+    <link rel="stylesheet" href="assets/css/uikit.css" />
+    <link rel="stylesheet" href="assets/css/popup.css" />
+    <script type="text/javascript" src="assets/js/sprintf.js"></script>
+    <script type="text/javascript" src="assets/js/angular.min.js"></script>
+    <script type="text/javascript" src="assets/js/angular-sanitize.min.js"></script>
   </head>
   <body>
     <div id="container" ng-controller="twitter">
-      <div class="card" ng-repeat="tweet in tweets" ng-cloak ng-tweet>
-        <div class="card-header" ng-background="{{tweet.user.profile_background_image_url_https}}">
-          <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
-        </div>
-        <div class="card-body" ng-bind-html="tweet.text" ng-tweet-inline-image></div>
-        <div class="card-footer">
-          <div class="card-footer-left">
-            <ul>
-              <li><a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">{{tweet.user.name}}</a></li>
-            </ul>
+      <nav class="uk-navbar">
+        <div class="uk-navbar-brand nav-text">twitter4chrome.js</div>
+        <ul class="uk-navbar-nav">
+          <li>
+            <a ng-click="navHome()">
+              <span class="twitter-icon icon-home"></span>
+              <span class="nav-text">Home</span>
+            </a>
+          </li>
+          <li>
+            <a ng-click="navMention()">
+              <span class="twitter-icon icon-mention"></span>
+              <span class="nav-text">Reply</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="uk-container">
+        <div class="card" ng-repeat="tweet in tweets" ng-cloak ng-tweet>
+          <div class="card-header" ng-background="{{tweet.user.profile_background_image_url_https}}">
+            <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
           </div>
-          <div class="card-footer-right">
-            <ul>
-              <li><span class="footer-icon icon-retweet" ng-click="send_retweet(tweet.id_str)">&nbsp;{{tweet.retweet_count}}</span></li>
-              <li><span class="footer-icon icon-star" ng-click="send_favorite(tweet.id_str)">&nbsp;{{tweet.favorite_count}}</span></li>
-              <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" target="_blank" ng-tweet-date></a></li>
-            </ul>
+          <div class="card-body" ng-bind-html="tweet.text" ng-tweet-inline-image></div>
+          <div class="card-footer">
+            <div class="card-footer-left">
+              <ul>
+                <li><a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">{{tweet.user.name}}</a></li>
+              </ul>
+            </div>
+            <div class="card-footer-right">
+              <ul>
+                <li><span class="twitter-icon icon-retweet" ng-click="send_retweet(tweet.id_str)">&nbsp;{{tweet.retweet_count}}</span></li>
+                <li><span class="twitter-icon icon-star" ng-click="send_favorite(tweet.id_str)">&nbsp;{{tweet.favorite_count}}</span></li>
+                <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" target="_blank" ng-tweet-date></a></li>
+              </ul>
+            </div>
+            <div style="clear:both" />
           </div>
-          <div style="clear:both" />
         </div>
       </div>
     </div>

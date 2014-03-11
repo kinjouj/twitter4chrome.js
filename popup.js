@@ -21,7 +21,7 @@ angular.module('twitterApp', ['ngSanitize'])
           var exp = $interpolate(
             '<a href="https://twitter.com/search?q=%23{{tag}}" target="_blank">#{{tag}}</a>'
           );
-          var expParam = { "tag": encodeURIComponent(hashtag.text) };
+          var expParam = { "tag": hashtag.text };
 
           text = text.replace('#' + hashtag.text, exp(expParam));
         });
@@ -110,9 +110,20 @@ angular.module('twitterApp', ['ngSanitize'])
   .controller('twitter', function($scope, $timeout) {
     chrome.runtime.getBackgroundPage(function(bg) {
       var twitter = bg.twitter;
-      twitter.home_timeline(function(tweets) {
-        $timeout(function() { $scope.tweets = tweets; }, 0);
-      });
+
+      $scope.navHome = function() {
+        twitter.home_timeline(function(tweets) {
+          $timeout(function() { $scope.tweets = tweets; }, 0);
+        });
+      };
+
+      $scope.navMention = function() {
+        twitter.mentions(function(tweets) {
+          $timeout(function() {
+            $scope.tweets = tweets;
+          }, 0);
+        });
+      };
 
       $scope.send_retweet = function(id) {
         if (confirm('retweet?')) {
@@ -127,5 +138,7 @@ angular.module('twitterApp', ['ngSanitize'])
           });
         }
       };
+
+      $scope.navHome();
     });
   });
