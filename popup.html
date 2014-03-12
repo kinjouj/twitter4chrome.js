@@ -4,14 +4,15 @@
     <link rel="stylesheet" href="https://abs.twimg.com/a/1393013467/css/t1/rosetta_core.bundle.css" />
     <link rel="stylesheet" href="assets/css/uikit.css" />
     <link rel="stylesheet" href="assets/css/popup.css" />
+    <script type="text/javascript" src="assets/js/jquery.js"></script>
     <script type="text/javascript" src="assets/js/sprintf.js"></script>
     <script type="text/javascript" src="assets/js/angular.min.js"></script>
     <script type="text/javascript" src="assets/js/angular-sanitize.min.js"></script>
+    <script type="text/javascript" src="assets/js/uikit.min.js"></script>
   </head>
   <body>
     <div id="container" ng-controller="twitter">
       <nav class="uk-navbar">
-        <div class="uk-navbar-brand nav-text">twitter4chrome.js</div>
         <ul class="uk-navbar-nav">
           <li>
             <a ng-click="navHome()">
@@ -24,6 +25,25 @@
               <span class="twitter-icon icon-mention"></span>
               <span class="nav-text">Reply</span>
             </a>
+          </li>
+          <li>
+            <a ng-click="navFavorites()">
+              <span class="twitter-icon icon-star"></span>
+              <span class="nav-text">Favorite</span>
+            </a>
+          </li>
+          <li class="uk-parent" ng-show="lists.length > 0" data-uk-dropdown>
+            <a href="javascript:void()">
+              <span class="twitter-icon icon-lists"></span>
+              <span class="nav-text">List</span>
+            </a>
+            <div class="uk-dropdown uk-dropdown-navbar">
+              <ul id="lists" class="uk-nav uk-nav-navbar">
+                <li ng-repeat="list in lists">
+                  <a ng-click="navList(list)">{{list.name}}</a>
+                </li>
+              </ul>
+            </div>
           </li>
         </ul>
       </nav>
@@ -41,9 +61,10 @@
             </div>
             <div class="card-footer-right">
               <ul>
-                <li><span class="twitter-icon icon-retweet" ng-click="send_retweet(tweet.id_str)">&nbsp;{{tweet.retweet_count}}</span></li>
-                <li><span class="twitter-icon icon-star" ng-click="send_favorite(tweet.id_str)">&nbsp;{{tweet.favorite_count}}</span></li>
+                <li><span class="twitter-icon icon-retweet" ng-click="send_retweet(tweet)">&nbsp;{{tweet.retweet_count}}</span></li>
+                <li><span class="twitter-icon icon-star" ng-click="send_favorite(tweet)">&nbsp;{{tweet.favorite_count}}</span></li>
                 <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" target="_blank" ng-tweet-date></a></li>
+                <li ng-tweet-source></li>
               </ul>
             </div>
             <div style="clear:both" />

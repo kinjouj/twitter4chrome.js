@@ -61,8 +61,16 @@ angular.module('twitterApp', ['ngSanitize'])
         });
       }
 
+      var elm;
+
+      try {
+        elm = angular.element(tweet.source);
+      } catch (e) {
+        elm = angular.element('<a>');
+        elm.text(tweet.source);
+      }
+
       tweet.text = text;
-      tweet.created_at = new Date(tweet.created_at);
       scope.tweet = tweet;
     };
   })
@@ -75,11 +83,16 @@ angular.module('twitterApp', ['ngSanitize'])
           return;
 
         tweet.inlineMedia.forEach(function(media) {
-          var elm = angular.element('<img>');
-          elm.attr('src', media);
-          elm.addClass('inline-image');
+          var imageElement = angular.element('<img>');
+          imageElement.attr('src', media);
+          imageElement.addClass('inline-image');
 
-          element.append(elm);
+          var anchorElement = angular.element('<a>');
+          anchorElement.attr('href', media);
+          anchorElement.attr('target', '_blank');
+          anchorElement.append(imageElement);
+
+          element.append(anchorElement);
         });
 
         element.removeAttr('ng-tweet-inline-image');
@@ -90,7 +103,7 @@ angular.module('twitterApp', ['ngSanitize'])
     return function(scope, element, attrs) {
       $timeout(function() {
         var tweet = scope.tweet;
-        var date = tweet.created_at;
+        var date = new Date(tweet.created_at);
 
         element.text(
           sprintf(
@@ -107,13 +120,40 @@ angular.module('twitterApp', ['ngSanitize'])
       }, 0);
     }
   })
-  .controller('twitter', function($scope, $timeout) {
+  .directive('ngTweetSource', function() {
+    return function(scope, element , attr) {
+      var tweet = scope.tweet;
+      var source = tweet.source;
+      var anchorElement = angular.element('<a>');
+
+      var sourceElement = angular.element(source);
+
+      if (sourceElement.length > 0) {
+        anchorElement.attr('href', sourceElement.attr('href'));
+        anchorElement.attr('target', '_blank');
+        anchorElement.text(sourceElement.text());
+      } else {
+        anchorElement.text(source);
+      }
+
+      element.append(anchorElement);
+      element.removeAttr('ng-tweet-source');
+    };
+  })
+  .controller('twitter', function($scope, $timeout, $window) {
     chrome.runtime.getBackgroundPage(function(bg) {
       var twitter = bg.twitter;
 
+      twitter.lists(function(lists) {
+        $scope.lists = lists;
+      });
+
       $scope.navHome = function() {
         twitter.home_timeline(function(tweets) {
-          $timeout(function() { $scope.tweets = tweets; }, 0);
+          $timeout(function() {
+            $scope.tweets = tweets;
+            scroll($window, 0);
+          }, 0);
         });
       };
 
@@ -121,20 +161,39 @@ angular.module('twitterApp', ['ngSanitize'])
         twitter.mentions(function(tweets) {
           $timeout(function() {
             $scope.tweets = tweets;
+            scroll($window, 0);
           }, 0);
         });
       };
 
-      $scope.send_retweet = function(id) {
-        if (confirm('retweet?')) {
-          twitter.retweet(id, function() {
+      $scope.navFavorites = function() {
+        twitter.favorites(function(tweets) {
+          $timeout(function() {
+            $scope.tweets = tweets;
+            scroll($window, 0);
+          }, 0);
+        });
+      };
+
+      $scope.navList = function(list) {
+        twitter.list({ "list_id": list.id_str }, function(tweets) {
+          $timeout(function() {
+            $scope.tweets = tweets;
+            scroll($window, 0);
+          }, 0);
+        });
+      };
+
+      $scope.send_retweet = function(tweet) {
+        if (!tweet.retweeted && confirm('retweet?')) {
+          twitter.retweet(tweet.id_str, function() {
           });
         }
       };
 
-      $scope.send_favorite = function(id) {
-        if (confirm('favorite?')) {
-          twitter.create_favorites(id, function() {
+      $scope.send_favorite = function(tweet) {
+        if (!tweet.favorited && confirm('favorite?')) {
+          twitter.create_favorites(tweet.id_str, function() {
           });
         }
       };
