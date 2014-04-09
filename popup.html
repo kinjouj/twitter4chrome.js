@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="twitterApp">
+<html ng-app="twitterApp" ng-csp>
   <head>
     <link rel="stylesheet" href="https://abs.twimg.com/a/1393013467/css/t1/rosetta_core.bundle.css" />
     <link rel="stylesheet" href="assets/css/uikit.css" />
@@ -7,40 +7,42 @@
     <script type="text/javascript" src="assets/js/jquery.js"></script>
     <script type="text/javascript" src="assets/js/sprintf.js"></script>
     <script type="text/javascript" src="assets/js/angular.min.js"></script>
+    <script type="text/javascript" src="assets/js/angular-route.min.js"></script>
     <script type="text/javascript" src="assets/js/angular-sanitize.min.js"></script>
     <script type="text/javascript" src="assets/js/uikit.min.js"></script>
+    <script type="text/javascript" src="popup.js"></script>
   </head>
   <body>
-    <div id="container" ng-controller="twitter">
-      <nav class="uk-navbar">
+    <div id="container">
+      <nav class="uk-navbar" ng-controller="NavCtrl">
         <ul class="uk-navbar-nav">
-          <li>
-            <a ng-click="navHome()">
+          <li id="uk-nav-home">
+            <a ng-href="#home">
               <span class="twitter-icon icon-home"></span>
               <span class="nav-text">Home</span>
             </a>
           </li>
-          <li>
-            <a ng-click="navMention()">
+          <li id="uk-nav-mention">
+            <a ng-href="#/mentions">
               <span class="twitter-icon icon-mention"></span>
               <span class="nav-text">Reply</span>
             </a>
           </li>
-          <li>
-            <a ng-click="navFavorites()">
+          <li id="uk-nav-favorites">
+            <a ng-href="#/favorites">
               <span class="twitter-icon icon-star"></span>
               <span class="nav-text">Favorite</span>
             </a>
           </li>
-          <li class="uk-parent" ng-show="lists.length > 0" data-uk-dropdown>
-            <a href="javascript:void()">
+          <li id="uk-nav-list" class="uk-parent" ng-show="lists.length > 0" data-uk-dropdown>
+            <a href="#" style="cursor: pointer">
               <span class="twitter-icon icon-lists"></span>
               <span class="nav-text">List</span>
             </a>
             <div class="uk-dropdown uk-dropdown-navbar">
               <ul id="lists" class="uk-nav uk-nav-navbar">
                 <li ng-repeat="list in lists">
-                  <a ng-click="navList(list)">{{list.name}}</a>
+                  <a ng-href="#/list/{{list.id_str}}">{{list.name}}</a>
                 </li>
               </ul>
             </div>
@@ -48,30 +50,8 @@
         </ul>
       </nav>
       <div class="uk-container">
-        <div class="card" ng-repeat="tweet in tweets" ng-cloak ng-tweet>
-          <div class="card-header" ng-background="{{tweet.user.profile_background_image_url_https}}">
-            <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
-          </div>
-          <div class="card-body" ng-bind-html="tweet.text" ng-tweet-inline-image></div>
-          <div class="card-footer">
-            <div class="card-footer-left">
-              <ul>
-                <li><a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">{{tweet.user.name}}</a></li>
-              </ul>
-            </div>
-            <div class="card-footer-right">
-              <ul>
-                <li><span class="twitter-icon icon-retweet" ng-click="send_retweet(tweet)">&nbsp;{{tweet.retweet_count}}</span></li>
-                <li><span class="twitter-icon icon-star" ng-click="send_favorite(tweet)">&nbsp;{{tweet.favorite_count}}</span></li>
-                <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" target="_blank" ng-tweet-date></a></li>
-                <li ng-tweet-source></li>
-              </ul>
-            </div>
-            <div style="clear:both" />
-          </div>
-        </div>
+        <div ng-view></div>
       </div>
     </div>
-    <script type="text/javascript" src="popup.js"></script>
   </body>
 </html>

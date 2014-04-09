@@ -1,4 +1,35 @@
-angular.module('twitterApp', ['ngSanitize'])
+angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
+  .service('twitter', function($q) {
+    var deferred = $q.defer();
+
+    chrome.runtime.getBackgroundPage(function(bg) {
+      deferred.resolve(bg.twitter);
+    });
+
+    return deferred.promise;
+  })
+  .config(function($compileProvider, $routeProvider) {
+    $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|chrome-extension):/);
+
+    $routeProvider
+      .when('/home', {
+        controller: 'HomeCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .when('/mentions', {
+        controller: 'MentionsCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .when('/favorites', {
+        controller: 'FavoritesCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .when('/list/:list_id', {
+        controller: 'ListCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .otherwise({ redirectTo: '/home' });
+  })
   .directive('ngBackground', function() {
     return function(scope, element, attrs) {
       attrs.$observe('ngBackground', function(value) {
@@ -43,10 +74,8 @@ angular.module('twitterApp', ['ngSanitize'])
 
       if ('urls' in entities) {
         entities.urls.forEach(function(url) {
-          var exp = $interpolate(
-            '<a href="{{url}}" target="_blank">{{text}}</a>'
-          );
-          var expParam = { "url": url.url, "text": url.expanded_url };
+          var exp = $interpolate('<a href="{{url}}" target="_blank">{{url}}</a>');
+          var expParam = { "url": url.expanded_url };
           text = text.replace(url.url, exp(expParam));
         });
       }
@@ -96,6 +125,7 @@ angular.module('twitterApp', ['ngSanitize'])
         });
 
         element.removeAttr('ng-tweet-inline-image');
+        delete tweet.inlineMedia;
       }, 0);
     };
   })
@@ -140,64 +170,68 @@ angular.module('twitterApp', ['ngSanitize'])
       element.removeAttr('ng-tweet-source');
     };
   })
-  .controller('twitter', function($scope, $timeout, $window) {
-    chrome.runtime.getBackgroundPage(function(bg) {
-      var twitter = bg.twitter;
-
-      twitter.lists(function(lists) {
+  .controller('NavCtrl', function(twitter, $scope) {
+    twitter.then(function(client) {
+      client.lists(function(lists) {
         $scope.lists = lists;
       });
-
-      $scope.navHome = function() {
-        twitter.home_timeline(function(tweets) {
-          $timeout(function() {
-            $scope.tweets = tweets;
-            scroll($window, 0);
-          }, 0);
-        });
-      };
-
-      $scope.navMention = function() {
-        twitter.mentions(function(tweets) {
-          $timeout(function() {
-            $scope.tweets = tweets;
-            scroll($window, 0);
-          }, 0);
-        });
-      };
-
-      $scope.navFavorites = function() {
-        twitter.favorites(function(tweets) {
-          $timeout(function() {
-            $scope.tweets = tweets;
-            scroll($window, 0);
-          }, 0);
-        });
-      };
-
-      $scope.navList = function(list) {
-        twitter.list({ "list_id": list.id_str }, function(tweets) {
-          $timeout(function() {
-            $scope.tweets = tweets;
-            scroll($window, 0);
-          }, 0);
-        });
-      };
-
-      $scope.send_retweet = function(tweet) {
-        if (!tweet.retweeted && confirm('retweet?')) {
-          twitter.retweet(tweet.id_str, function() {
+    });
+  })
+  .controller('BaseController', function($scope, twitter) {
+    $scope.send_retweet = function(tweet) {
+      if (!tweet.retweeted && confirm('retweet?')) {
+        twitter.then(function(client) {
+          client.retweet(tweet.id_str, function() {
           });
-        }
-      };
+        });
+      }
+    };
 
-      $scope.send_favorite = function(tweet) {
-        if (!tweet.favorited && confirm('favorite?')) {
-          twitter.create_favorites(tweet.id_str, function() {
+    $scope.send_favorite = function(tweet) {
+      if (!tweet.favorited && confirm('favorite?')) {
+        twitter.then(function(client) {
+          client.create_favorites(tweet.id_str, function() {
           });
-        }
-      };
+        });
+      }
+    };
+  })
+  .controller('HomeCtrl', function($controller, $scope, twitter) {
+    $controller('BaseController', { '$scope': $scope })
 
-      $scope.navHome();
+    twitter.then(function(client) {
+      client.home_timeline(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
+  .controller('MentionsCtrl', function($controller, $scope, twitter) {
+    twitter.then(function(client) {
+      client.mentions(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
+  .controller('FavoritesCtrl', function($controller, $scope, twitter) {
+    twitter.then(function(client) {
+      client.favorites(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
+  .controller('ListCtrl', function($controller, $scope, $routeParams, twitter) {
+    twitter.then(function(client) {
+      var id = $routeParams.list_id;
+      client.list({ list_id: id }, function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
     });
   });
