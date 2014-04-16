@@ -1,228 +1,266 @@
-(function() {
-  "use strict";
+angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
+  .service('twitter', function($q) {
+    var deferred = $q.defer();
 
-  chrome.runtime.getBackgroundPage(function(page) {
-    var twitter = page.twitter;
-    twitter.home_timeline(function(tweets) {
-      var container = document.querySelector('#container');
-      var fragment = document.createDocumentFragment();
+    chrome.runtime.getBackgroundPage(function(bg) {
+      deferred.resolve(bg.twitter);
+    });
 
-      /*
-      <div class="card">
-        <div class="card-header" data-background="{background_image_url}">
-        </div>
-        <div class="card-body">
-          <p></p>
-        </div>
-        <div class="card-footer">
-          <div class="card-footer-left">
-          </div>
-          <div class="card-footer-right">
-          </div>
-          <div style="clear:both" />
-        </div>
-      </div>
-      */
+    return deferred.promise;
+  })
+  .config(function($compileProvider, $routeProvider) {
+    $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|chrome-extension):/);
 
-      tweets.forEach(function(tweet) {
-        if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
+    $routeProvider
+      .when('/home', {
+        controller: 'HomeCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .when('/my', {
+        controller: 'AccountCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .when('/mentions', {
+        controller: 'MentionsCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .when('/favorites', {
+        controller: 'FavoritesCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .when('/list/:list_id', {
+        controller: 'ListCtrl',
+        templateUrl: 'tweet_template.html'
+      })
+      .otherwise({ redirectTo: '/home' });
+  })
+  .directive('ngBackground', function() {
+    return function(scope, element, attrs) {
+      var tweet = scope.tweet;
+      if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
 
-        console.log(tweet);
+      attrs.$observe('ngBackground', function() {
+        var bgUrl = tweet.user.profile_banner_url;
+        if (angular.isString(bgUrl)) {
+          bgUrl += '/1500x500';
+        } else {
+          bgUrl = 'https://abs.twimg.com/a/1397489556/img/t1/grey_header_web.jpg';
+        }
 
-        var user = tweet.user;
-        var profileBackgroundImageUrl = user.profile_background_image_url_https;
-        var profileImageUrl = user.profile_image_url_https;
+        element.css({ 'background-image': 'url(' + bgUrl + ')' });
+        element.removeAttr('ng-background');
+      });
+    };
+  })
+  .directive('ngTweet', function($interpolate) {
+    return function(scope, element, attrs) {
+      var tweet = scope.tweet;
 
-        var img = document.createElement('img');
-        img.setAttribute('src', profileImageUrl);
-        img.addEventListener('click', function() {
-          window.open('https://twitter.com/' + user.screen_name);
+      if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
+
+      var entities = tweet.entities;
+      var text = tweet.text;
+
+      if ('hashtags' in entities) {
+        entities.hashtags.forEach(function(hashtag) {
+          var exp = $interpolate(
+            '<a href="https://twitter.com/search?q=%23{{tag}}" target="_blank">#{{tag}}</a>'
+          );
+          var expParam = { "tag": hashtag.text };
+
+          text = text.replace('#' + hashtag.text, exp(expParam));
+        });
+      }
+
+      tweet.inlineMedia = [];
+
+      if ('media' in entities) {
+        entities.media.forEach(function(media) {
+          var exp = $interpolate(
+            '<a href="{{url}}" target="_blank">{{text}}</a>'
+          );
+          var expParam = { "url": media.media_url_https, "text": media.url };
+
+          text = text.replace(media.url, exp(expParam));
+          tweet.inlineMedia.push(media.media_url_https);
+        });
+      }
+
+      if ('urls' in entities) {
+        entities.urls.forEach(function(url) {
+          var exp = $interpolate('<a href="{{url}}" target="_blank">{{url}}</a>');
+          var expParam = { "url": url.expanded_url };
+          text = text.replace(url.url, exp(expParam));
+        });
+      }
+
+      if ('user_mentions' in entities) {
+        entities.user_mentions.forEach(function(mention) {
+          var exp = $interpolate(
+            '<a href="https://twitter.com/{{screen_name}}" target="_blank">@{{screen_name}}</a>'
+          );
+          var expParam = { "screen_name": mention.screen_name };
+          text = text.replace('@' + mention.screen_name, exp(expParam));
+        });
+      }
+
+      var elm;
+
+      try {
+        elm = angular.element(tweet.source);
+      } catch (e) {
+        elm = angular.element('<a>');
+        elm.text(tweet.source);
+      }
+
+      tweet.text = text;
+      scope.tweet = tweet;
+    };
+  })
+  .directive('ngTweetInlineImage', function($timeout) {
+    return function(scope, element, attrs) {
+      $timeout(function() {
+        var tweet = scope.tweet;
+
+        if (!('inlineMedia' in tweet))
+          return;
+
+        tweet.inlineMedia.forEach(function(media) {
+          var imageElement = angular.element('<img>');
+          imageElement.attr('src', media);
+          imageElement.addClass('inline-image');
+
+          var anchorElement = angular.element('<a>');
+          anchorElement.attr('href', media);
+          anchorElement.attr('target', '_blank');
+          anchorElement.append(imageElement);
+
+          element.append(anchorElement);
         });
 
-        var headerDiv = document.createElement('div');
-        headerDiv.setAttribute('class', 'card-header');
-        headerDiv.setAttribute(
-          'data-background',
-          profileBackgroundImageUrl
+        element.removeAttr('ng-tweet-inline-image');
+        delete tweet.inlineMedia;
+      }, 0);
+    };
+  })
+  .directive('ngTweetDate', function($timeout) {
+    return function(scope, element, attrs) {
+      $timeout(function() {
+        var tweet = scope.tweet;
+        var date = new Date(tweet.created_at);
+
+        element.text(
+          sprintf(
+            '%04d/%02d/%02d %02d:%02d:%02d',
+            date.getFullYear(),
+            date.getMonth() + 1,
+            date.getDate(),
+            date.getHours(),
+            date.getMinutes(),
+            date.getSeconds()
+          )
         );
-        $(headerDiv).dataBackground();
-        headerDiv.appendChild(img);
+        element.removeAttr('ng-tweet-date');
+      }, 0);
+    }
+  })
+  .directive('ngTweetSource', function() {
+    return function(scope, element , attr) {
+      var tweet = scope.tweet;
+      var source = tweet.source;
+      var anchorElement = angular.element('<a>');
 
-        var text = tweet.text;
-        var createdAt = new Date(tweet.created_at);
-        var entities = tweet.entities;
+      var sourceElement = angular.element(source);
 
-        if ('hashtags' in entities) {
-          entities.hashtags.forEach(function(hashtag) {
-            text = text.replace(
-              '#' + hashtag.text,
-              '<a href="https://twitter.com/search/' + encodeURIComponent('#' + hashtag.text) + '" target="_blank">#' + hashtag.text + '</a>'
-            );
-          });
-        }
+      if (sourceElement.length > 0) {
+        anchorElement.attr('href', sourceElement.attr('href'));
+        anchorElement.attr('target', '_blank');
+        anchorElement.text(sourceElement.text());
+      } else {
+        anchorElement.text(source);
+      }
 
-        var medias = [];
-
-        if ('media' in entities) {
-          entities.media.forEach(function(media) {
-            text = text.replace(
-              media.url,
-              '<a href="' + media.media_url_https + '" target="_blank">' + media.url + '</a>'
-            );
-
-            medias.push(media.media_url_https);
-          });
-        }
-
-        if ('urls' in entities) {
-          entities.urls.forEach(function(url) {
-            text = text.replace(
-              url.url,
-              '<a href="' + url.expanded_url + '" target="_blank">' + url.expanded_url + '</a>'
-            );
-          });
-        }
-
-        if ('user_mentions' in entities) {
-          entities.user_mentions.forEach(function(mention) {
-            text = text.replace(
-              '@' + mention.screen_name,
-              '<a href="https://twitter.com/' + mention.screen_name + '" target="_blank">@' + mention.screen_name + '</a>'
-            );
-          });
-        }
-
-        var p = document.createElement('p');
-        p.innerHTML = text;
-
-        var bodyDiv = document.createElement('div');
-        bodyDiv.setAttribute('class', 'card-body');
-        bodyDiv.appendChild(p);
-
-        if (medias.length > 0) {
-          medias.forEach(function(media) {
-            var mediaImg = document.createElement('img');
-            mediaImg.src = media;
-            mediaImg.setAttribute('class', 'inline-image');
-
-            bodyDiv.appendChild(mediaImg);
-          });
-        }
-
-        var footerListUserAnchor = document.createElement('a');
-        footerListUserAnchor.innerText = user.name;
-        footerListUserAnchor.setAttribute('target', '_blank');
-        footerListUserAnchor.setAttribute(
-          'href',
-          'https://twitter.com/' + user.screen_name
-        );
-
-        var footerListUser = document.createElement('li');
-        footerListUser.appendChild(footerListUserAnchor);
-
-        var footerListRTSpan = document.createElement('span');
-        footerListRTSpan.setAttribute('class', 'footer-icon icon-retweet');
-        footerListRTSpan.innerHTML = '&nbsp;' + tweet.retweet_count;
-
-        if (!tweet.retweeted) {
-          footerListRTSpan.addEventListener('click', function() {
-            if (confirm('retweet?')) {
-              twitter.retweet(tweet.id_str, function() {
-                tweet.retweet_count++;
-                footerListRTSpan.innerHTML = '&nbsp;' + tweet.retweet_count;
-              });
-            }
-          });
-        }
-
-        var footerListRT = document.createElement('li');
-        footerListRT.appendChild(footerListRTSpan);
-
-        var footerListFavSpan = document.createElement('span');
-        footerListFavSpan.setAttribute('class', 'footer-icon icon-star');
-        footerListFavSpan.innerHTML = '&nbsp;' + tweet.favorite_count;
-
-        if (!tweet.favorited) {
-          footerListFavSpan.addEventListener('click', function() {
-            if (confirm('favorite?')) {
-              twitter.create_favorites(tweet.id_str, function() {
-                tweet.favorite_count++;
-                footerListFavSpan.innerHTML = '&nbsp;' + tweet.favorite_count;
-              });
-            }
-          });
-        }
-
-        var footerListFav = document.createElement('li');
-        footerListFav.appendChild(footerListFavSpan);
-
-        var footerListCreatedAtAnchor = document.createElement('a');
-        footerListCreatedAtAnchor.innerText = sprintf(
-          '%04d/%02d/%02d %02d:%02d:%02d',
-          createdAt.getFullYear(),
-          createdAt.getMonth() + 1,
-          createdAt.getDate(),
-          createdAt.getHours(),
-          createdAt.getMinutes(),
-          createdAt.getSeconds()
-        );
-        footerListCreatedAtAnchor.setAttribute('target', '_blank');
-        footerListCreatedAtAnchor.setAttribute(
-          'href',
-          'https://twitter.com/' + user.screen_name + '/status/' + tweet.id_str
-        );
-
-        var footerListCreatedAt = document.createElement('li');
-        footerListCreatedAt.appendChild(footerListCreatedAtAnchor);
-
-        var source = $.parseHTML(tweet.source)[0];
-        if (!(source instanceof HTMLElement)) {
-          source = document.createElement('a');
-          source.setAttribute('href', 'javascript:void()');
-          source.innerText = tweet.source;
-        }
-
-        source.setAttribute('target', '_blank');
-
-        var footerListSource = document.createElement('li');
-        footerListSource.appendChild(source);
-
-        var footerLeftList = document.createElement('ul');
-        footerLeftList.appendChild(footerListUser);
-
-        var footerRightList = footerLeftList.cloneNode();
-        footerRightList.appendChild(footerListRT);
-        footerRightList.appendChild(footerListFav);
-        footerRightList.appendChild(footerListCreatedAt);
-        footerRightList.appendChild(footerListSource);
-
-        var footerLeft = document.createElement('div');
-        footerLeft.setAttribute('class', 'card-footer-left');
-        footerLeft.appendChild(footerLeftList);
-
-        var footerRight = document.createElement('div');
-        footerRight.setAttribute('class', 'card-footer-right');
-        footerRight.appendChild(footerRightList);
-
-        var footerEnd = document.createElement('div');
-        footerEnd.setAttribute('style', 'clear:both');
-
-        var footerDiv = document.createElement('div');
-        footerDiv.setAttribute('class', 'card-footer');
-        footerDiv.appendChild(footerLeft);
-        footerDiv.appendChild(footerRight);
-        footerDiv.appendChild(footerEnd);
-
-        var div = document.createElement('div');
-        div.setAttribute('class', 'card');
-        div.appendChild(headerDiv);
-        div.appendChild(bodyDiv);
-        div.appendChild(footerDiv);
-
-        fragment.appendChild(div);
+      element.append(anchorElement);
+      element.removeAttr('ng-tweet-source');
+    };
+  })
+  .controller('NavCtrl', function(twitter, $scope) {
+    twitter.then(function(client) {
+      client.lists(function(lists) {
+        $scope.lists = lists;
       });
+    });
+  })
+  .controller('BaseController', function($scope, twitter) {
+    $scope.send_retweet = function(tweet) {
+      if (!tweet.retweeted && confirm('retweet?')) {
+        twitter.then(function(client) {
+          client.retweet(tweet.id_str, function() {
+          });
+        });
+      }
+    };
 
-      container.appendChild(fragment);
+    $scope.send_favorite = function(tweet) {
+      if (!tweet.favorited && confirm('favorite?')) {
+        twitter.then(function(client) {
+          client.create_favorites(tweet.id_str, function() {
+          });
+        });
+      }
+    };
+  })
+  .controller('AccountCtrl', function($controller, $scope, twitter) {
+    twitter.then(function(client) {
+      client.user_timeline(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
+  .controller('HomeCtrl', function($controller, $scope, twitter) {
+    $controller('BaseController', { '$scope': $scope });
+
+    twitter.then(function(client) {
+      client.home_timeline(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
+  .controller('MentionsCtrl', function($controller, $scope, twitter) {
+    $controller('BaseController', { '$scope': $scope });
+
+    twitter.then(function(client) {
+      client.mentions(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
+  .controller('FavoritesCtrl', function($controller, $scope, twitter) {
+    $controller('BaseController', { '$scope': $scope });
+
+    twitter.then(function(client) {
+      client.favorites(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
+  .controller('ListCtrl', function($controller, $scope, $routeParams, twitter) {
+    $controller('BaseController', { '$scope': $scope });
+
+    twitter.then(function(client) {
+      var id = $routeParams.list_id;
+      client.list({ list_id: id }, function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
     });
   });
-})();

@@ -84,6 +84,76 @@ var Twitter = (function() {
     );
   };
 
+  Twitter.prototype.user_timeline = function(options, cb) {
+    if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
+      cb = options;
+      options = null;
+    }
+
+    oauth.getResponse(
+      "GET",
+      "https://api.twitter.com/1.1/statuses/user_timeline.json",
+      options,
+      cb
+    );
+  };
+
+  Twitter.prototype.mentions = function(options, cb) {
+    if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
+      cb = options;
+      options = null;
+    }
+
+    oauth.getResponse(
+      "GET",
+      "https://api.twitter.com/1.1/statuses/mentions_timeline.json",
+      options,
+      cb
+    );
+  };
+
+  Twitter.prototype.favorites = function(options, cb) {
+    if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
+      cb = options;
+      options = null;
+    }
+
+    oauth.getResponse(
+      "GET",
+      "https://api.twitter.com/1.1/favorites/list.json",
+      options,
+      cb
+    );
+  };
+
+  Twitter.prototype.lists = function(options, cb) {
+    if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
+      cb = options;
+      options = null;
+    }
+
+    oauth.getResponse(
+      "GET",
+      "https://api.twitter.com/1.1/lists/list.json",
+      options,
+      cb
+    );
+  };
+
+  Twitter.prototype.list = function(options, cb) {
+    if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
+      cb = options;
+      options = null;
+    }
+
+    oauth.getResponse(
+      "GET",
+      "https://api.twitter.com/1.1/lists/statuses.json",
+      options,
+      cb
+    );
+  };
+
   Twitter.prototype.create_favorites = function(id, cb) {
     oauth.getResponse(
       "POST",
