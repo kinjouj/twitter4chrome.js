@@ -32,6 +32,7 @@ a:visited {
   padding: 0px;
   margin: 15px;
   overflow: hidden;
+  box-shadow: 0 1px 4px rgba(225, 232, 237, 0.3), 0 0 40px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
@@ -42,6 +43,7 @@ a:visited {
   padding: 0px;
   margin: 0px;
   text-align: center;
+  background-size: contain;
 }
 
 .card-header img {
@@ -56,6 +58,11 @@ a:visited {
   margin: 20px 10px;
   font-size: 14px;
   font-family: 'Open Sans', sans-serif;
+}
+
+.card-body p {
+  word-break: break-word;
+  white-space: pre;
 }
 
 .card-body .inline-image {
@@ -116,4 +123,8 @@ a:visited {
 
 .icon-retweet:before {
   content: "\f152";
+}
+
+.icon-my:before {
+  content: "\f056";
 }

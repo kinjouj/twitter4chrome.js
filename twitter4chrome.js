@@ -84,6 +84,20 @@ var Twitter = (function() {
     );
   };
 
+  Twitter.prototype.user_timeline = function(options, cb) {
+    if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
+      cb = options;
+      options = null;
+    }
+
+    oauth.getResponse(
+      "GET",
+      "https://api.twitter.com/1.1/statuses/user_timeline.json",
+      options,
+      cb
+    );
+  };
+
   Twitter.prototype.mentions = function(options, cb) {
     if (_.isFunction(options) && (_.isNull(cb) || _.isUndefined(cb))) {
       cb = options;

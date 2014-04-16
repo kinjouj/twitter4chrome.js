@@ -1,8 +1,10 @@
 <div class="card" ng-repeat="tweet in tweets" ng-cloak ng-tweet>
-  <div class="card-header" ng-background="{{tweet.user.profile_background_image_url_https}}">
+  <div class="card-header" ng-background>
     <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
   </div>
-  <div class="card-body" ng-bind-html="tweet.text" ng-tweet-inline-image></div>
+  <div class="card-body">
+    <p ng-bind-html="tweet.text" ng-tweet-inline-image />
+  </div>
   <div class="card-footer">
     <div class="card-footer-left">
       <ul>

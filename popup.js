@@ -16,6 +16,10 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
         controller: 'HomeCtrl',
         templateUrl: 'tweet_template.html'
       })
+      .when('/my', {
+        controller: 'AccountCtrl',
+        templateUrl: 'tweet_template.html'
+      })
       .when('/mentions', {
         controller: 'MentionsCtrl',
         templateUrl: 'tweet_template.html'
@@ -32,8 +36,18 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
   })
   .directive('ngBackground', function() {
     return function(scope, element, attrs) {
-      attrs.$observe('ngBackground', function(value) {
-        element.css({ 'background-image': 'url(' + value + ')' });
+      var tweet = scope.tweet;
+      if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
+
+      attrs.$observe('ngBackground', function() {
+        var bgUrl = tweet.user.profile_banner_url;
+        if (angular.isString(bgUrl)) {
+          bgUrl += '/1500x500';
+        } else {
+          bgUrl = 'https://abs.twimg.com/a/1397489556/img/t1/grey_header_web.jpg';
+        }
+
+        element.css({ 'background-image': 'url(' + bgUrl + ')' });
         element.removeAttr('ng-background');
       });
     };
@@ -196,8 +210,17 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
       }
     };
   })
+  .controller('AccountCtrl', function($controller, $scope, twitter) {
+    twitter.then(function(client) {
+      client.user_timeline(function(tweets) {
+        $scope.$apply(function() {
+          $scope.tweets = tweets;
+        });
+      });
+    });
+  })
   .controller('HomeCtrl', function($controller, $scope, twitter) {
-    $controller('BaseController', { '$scope': $scope })
+    $controller('BaseController', { '$scope': $scope });
 
     twitter.then(function(client) {
       client.home_timeline(function(tweets) {
@@ -208,6 +231,8 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
     });
   })
   .controller('MentionsCtrl', function($controller, $scope, twitter) {
+    $controller('BaseController', { '$scope': $scope });
+
     twitter.then(function(client) {
       client.mentions(function(tweets) {
         $scope.$apply(function() {
@@ -217,6 +242,8 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
     });
   })
   .controller('FavoritesCtrl', function($controller, $scope, twitter) {
+    $controller('BaseController', { '$scope': $scope });
+
     twitter.then(function(client) {
       client.favorites(function(tweets) {
         $scope.$apply(function() {
@@ -226,6 +253,8 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
     });
   })
   .controller('ListCtrl', function($controller, $scope, $routeParams, twitter) {
+    $controller('BaseController', { '$scope': $scope });
+
     twitter.then(function(client) {
       var id = $routeParams.list_id;
       client.list({ list_id: id }, function(tweets) {
