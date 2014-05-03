@@ -42,7 +42,7 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
       attrs.$observe('ngBackground', function() {
         var bgUrl = tweet.user.profile_banner_url;
         if (angular.isString(bgUrl)) {
-          bgUrl += '/1500x500';
+          bgUrl += '/web';
         } else {
           bgUrl = 'https://abs.twimg.com/a/1397489556/img/t1/grey_header_web.jpg';
         }
@@ -57,6 +57,8 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
       var tweet = scope.tweet;
 
       if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
+
+      console.log(tweet);
 
       var entities = tweet.entities;
       var text = tweet.text;
