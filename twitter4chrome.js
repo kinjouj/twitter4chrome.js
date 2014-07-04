@@ -80,7 +80,10 @@ var Twitter = (function() {
       "GET",
       "https://api.twitter.com/1.1/statuses/home_timeline.json",
       options,
-      cb
+      cb,
+      function() {
+        cb([]);
+      }
     );
   };
 
@@ -94,7 +97,10 @@ var Twitter = (function() {
       "GET",
       "https://api.twitter.com/1.1/statuses/user_timeline.json",
       options,
-      cb
+      cb,
+      function() {
+        cb([]);
+      }
     );
   };
 

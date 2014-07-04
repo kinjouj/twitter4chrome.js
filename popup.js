@@ -1,3 +1,5 @@
+var steady;
+
 angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
   .service('twitter', function($q) {
     var deferred = $q.defer();
@@ -34,6 +36,39 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
       })
       .otherwise({ redirectTo: '/home' });
   })
+  .directive('ngScrollEnd', function($timeout) {
+    var $window = angular.element(window);
+
+    return function(scope, element, attrs) {
+      var $window = angular.element(window);
+      var content = angular.element('#tweets');
+      var loading = false;
+
+      $window.unbind('scroll');
+      $window.bind('scroll', function() {
+        if (loading) {
+          return;
+        }
+
+        var scrollHeight = content.offset().top + content.height();
+        var scrollPos = $window.height() + $window.scrollTop();
+
+        if (scrollHeight - scrollPos < 100) {
+          var done = function() {
+            loading = false;
+          };
+
+          scope.$eval(attrs.ngScrollEnd, { "done": done });
+
+          $timeout(function() {
+            if (loading) {
+              loading = false;
+            }
+          }, 10000);
+        }
+      });
+    };
+  })
   .directive('ngBackground', function() {
     return function(scope, element, attrs) {
       var tweet = scope.tweet;
@@ -58,7 +93,7 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
 
       if ('retweeted_status' in tweet) tweet = tweet.retweeted_status;
 
-      console.log(tweet);
+      //console.log(tweet);
 
       var entities = tweet.entities;
       var text = tweet.text;
@@ -215,6 +250,23 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
   .controller('AccountCtrl', function($controller, $scope, twitter) {
     twitter.then(function(client) {
       client.user_timeline(function(tweets) {
+        var max_id = tweets[tweets.length - 1].id_str;
+
+        $scope.scrollEnd = function(done) {
+          try {
+            client.user_timeline({ max_id: max_id }, function(tweets) {
+              $scope.$apply(function() {
+                max_id = tweets[tweets.length - 1].id_str;
+                $scope.tweets = $scope.tweets.concat(tweets.splice(1));
+                done();
+              });
+            });
+          } catch (e) {
+            console.error(e);
+            done();
+          }
+        }
+
         $scope.$apply(function() {
           $scope.tweets = tweets;
         });
@@ -226,6 +278,23 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
 
     twitter.then(function(client) {
       client.home_timeline(function(tweets) {
+        var max_id = tweets[tweets.length - 1].id_str;
+
+        $scope.scrollEnd = function(done) {
+          try {
+            client.home_timeline({ max_id: max_id }, function(tweets) {
+              $scope.$apply(function() {
+                max_id = tweets[tweets.length - 1].id_str;
+                $scope.tweets = $scope.tweets.concat(tweets.splice(1));
+                done();
+              });
+            });
+          } catch (e) {
+            console.error(e);
+            done();
+          };
+        };
+
         $scope.$apply(function() {
           $scope.tweets = tweets;
         });

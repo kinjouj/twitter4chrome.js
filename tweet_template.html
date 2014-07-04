@@ -1,3 +1,4 @@
+<div id="tweets" ng-scroll-end="scrollEnd(done)">
 <div id="{{tweet.id}}" class="card" ng-repeat="tweet in tweets" ng-cloak ng-tweet>
   <div class="card-header" ng-background>
     <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
@@ -20,4 +21,5 @@
       </ul>
     </div>
   </div>
+</div>
 </div>
