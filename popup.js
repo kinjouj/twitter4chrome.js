@@ -37,8 +37,6 @@ angular.module('twitterApp', ['ngRoute', 'ngSanitize'])
       .otherwise({ redirectTo: '/home' });
   })
   .directive('ngScrollEnd', function($timeout) {
-    var $window = angular.element(window);
-
     return function(scope, element, attrs) {
       var $window = angular.element(window);
       var content = angular.element('#tweets');
