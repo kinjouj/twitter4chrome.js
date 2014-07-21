@@ -1,25 +1,25 @@
 <div id="tweets" ng-scroll-end="scrollEnd(done)">
-<div id="{{tweet.id}}" class="card" ng-repeat="tweet in tweets" ng-cloak ng-tweet>
-  <div class="card-header" ng-background>
-    <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
-  </div>
-  <div class="card-body">
-    <p ng-bind-html="tweet.text" ng-tweet-inline-image />
-  </div>
-  <div class="card-footer">
-    <div class="card-footer-left">
-      <ul>
-        <li><a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">{{tweet.user.name}}</a></li>
-      </ul>
+  <div id="{{tweet.id}}" class="card" ng-repeat="tweet in tweets" ng-tweet>
+    <div class="card-header" ng-background>
+      <a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank"><img ng-src="{{tweet.user.profile_image_url_https}}" /></a>
     </div>
-    <div class="card-footer-right">
-      <ul>
-        <li><span class="twitter-icon icon-retweet" ng-click="send_retweet(tweet)">&nbsp;{{tweet.retweet_count}}</span></li>
-        <li><span class="twitter-icon icon-star" ng-click="send_favorite(tweet)">&nbsp;{{tweet.favorite_count}}</span></li>
-        <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" target="_blank" ng-tweet-date></a></li>
-        <li ng-tweet-source></li>
-      </ul>
+    <div class="card-body">
+      <p ng-bind-html="tweet.text" ng-tweet-inline-image />
+    </div>
+    <div class="card-footer">
+      <div class="card-footer-left">
+        <ul>
+          <li><a href="https://twitter.com/{{tweet.user.screen_name}}" target="_blank">{{tweet.user.name}}</a></li>
+        </ul>
+      </div>
+      <div class="card-footer-right">
+        <ul>
+          <li><span class="twitter-icon icon-retweet" ng-click="send_retweet(tweet)">&nbsp;{{tweet.retweet_count}}</span></li>
+          <li><span class="twitter-icon icon-star" ng-click="send_favorite(tweet)">&nbsp;{{tweet.favorite_count}}</span></li>
+          <li><a href="https://twitter.com/{{tweet.user.screen_name}}/status/{{tweet.id_str}}" target="_blank" ng-tweet-date></a></li>
+          <li ng-tweet-source></li>
+        </ul>
+      </div>
     </div>
   </div>
-</div>
 </div>
